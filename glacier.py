@@ -8,19 +8,19 @@ import time
 import datetime as datetime
 import scipy
 
-global      ic_jc ip_jc im_jc ic_jp ic_jm ip_jm im_jm im_jp   #### where are they
+global      ic_jc ip_jc im_jc ic_jp ic_jm ip_jm im_jm im_jp   #### where are they @matlab
 
 
 mat = scipy.io.loadmat(infile)
 B = mat['B']
 b_dot = mat['b_dot']
-dx = mat['dx']
-dy = mat['dy']
+dx = mat['dx'][0,0]
+dy = mat['dy'][0,0]
 i = mat['i'][0,0] ##
 j = mat['j'][0,0] ##
 nx = mat['nx'][0,0]
 ny = mat['ny'][0,0]
-N = SetupIndexArrays(nx,ny) ###### put in global
+N = SetupIndexArrays(nx,ny)                 ###### put in global, @matlab?
 
 
 '''
@@ -46,7 +46,7 @@ def main():
 	print_out(METHOD,OMEGA,dt,A_GLEN,C_SLIDE,nx,ny)
 	timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-	B = B.reshape(N,1)
+	B = B.reshape(N,1)   ######## check reshape @matlab
 	B[np.isnan(B)] = 0
 
 	b_dot = b_dot.reshape(N,1)
@@ -59,8 +59,8 @@ def main():
 
 	while 1:
 	    S,t,LAMBDA_max,k_LAMBDA_max = step(S, B, b_dot, dt, N, t, METHOD)
-	    H_max, k_H_max = np.max(S - B)
-	    S_max, k_S_max = np.max(S)
+	    H_max, k_H_max = np.max(S - B)  ##### @matlab
+	    S_max, k_S_max = np.max(S)        ##### @matlab
 	    ALPHA_I = 100*np.sum(S>B)/N
 	    
 	    print 'BKS: At t={:8.2f} yr ALPHA_I={:.2f}%% and maxima are: H({:d}) = {:f} \
@@ -100,8 +100,8 @@ def read_mat(infile):
     mat = scipy.io.loadmat(infile)
     B = mat['B']
     b_dot = mat['b_dot']
-    dx = mat['dx']
-    dy = mat['dy']
+    dx = mat['dx'][0,0]
+    dy = mat['dy'][0,0]
     i = mat['i'][0,0] ##
     j = mat['j'][0,0] ##
     nx = mat['nx'][0,0]
@@ -132,13 +132,13 @@ def case_0():
     x_c = 0.5*L_x
     y_c = 0.5*L_y
     
-    X, Y = np.meshgrid(x,y)
+    X, Y = np.meshgrid(x,y)     ################# differ from @matlab?
     
     Z0 = 2000
     sigma_x = x_c
     sigma_y = y_c
     R2 = np.square(X-x_c) + np.square(Y-y_c)
-    B = Z0*np.exp(-R2/R0^2)  ##
+    B = Z0*np.exp(-R2/R0**2)  ##
     
     B_min = np.min(B)   ##
     B_max = np.max(B)   ##
@@ -146,12 +146,13 @@ def case_0():
     b_dot_ppt = 1
     b_dot = b_dot_melt + b_dot_ppt
     
-    B[5,6] = B[5,6] - 100
-    B[6,6] = B[6,6] + 100
-    B[7,6] = B[7,6] - 100
+    #### differ from matlab
+    B[4,5] = B[4,5] - 100
+    B[5,5] = B[5,5] + 100
+    B[6,5] = B[6,5] - 100
     
-    B[6,5] = B[6,5] + 200
-    B[6,7] = B[6,7] + 200
+    B[5,4] = B[5,4] + 200
+    B[5,6] = B[5,6] + 200
     
     B = B + 5000
     return B,b_dot,dx,dy,ny,nx,t_STOP,dt_SAVE,dt
@@ -197,7 +198,6 @@ def case_4():
     dt = 1.0
     return B,b_dot,dx,dy,ny,nx,t_STOP,dt_SAVE,dt
 
-def print_out(METHOD,OMEGA,dt,A_GLEN,C_SLIDE,nx,ny):
     print '=================================================================================='
     print 'LAUNCHING GLACIER SIMULATION MODEL - Ver 5.01 using the {:s} solver\n\n'.format(METHOD)
     print '  OMEGA      = {:.2f}\n'.format(OMEGA)
@@ -212,8 +212,9 @@ def print_out(METHOD,OMEGA,dt,A_GLEN,C_SLIDE,nx,ny):
 
 
 def step(S, B, b_dot, dt, N, t, METHOD):
-    if A_tilde.size == 0:
-        A_tilde,C_tilde,nm_half,npl,mm_half,ml = isempty_A_tilde(A_GLEN,RHO,g,n_GLEN,dx,C_SLIDE,m_SLIDE)
+    # A_tilde = np.empty
+    # if A_tilde.size == 0:
+        # A_tilde,C_tilde,nm_half,npl,mm_half,ml = isempty_A_tilde(A_GLEN,RHO,g,n_GLEN,dx,C_SLIDE,m_SLIDE)
         
     D_IC_jc, D_IP_jc, D_ic_JC, D_ic_JP = diffusion_gl(S, B)
     D_sum = D_IC_jc + D_IP_jc + D_ic_JC + D_ic_JP
@@ -234,7 +235,7 @@ def step(S, B, b_dot, dt, N, t, METHOD):
     H_out = S_out - B
     t_n = t + dt
     
-    D_max,k_LAMBDA_max = np.max(D_IC_jc+D_IP_jc+D_ic_JC+D_ic_JP)  #########
+    D_max,k_LAMBDA_max = np.max(D_IC_jc+D_IP_jc+D_ic_JC+D_ic_JP)  ######### @matlab
     LAMBDA_max = 0.25 * dt * D_max
     
     return S,t,LAMBDA_max,k_LAMBDA_max
